@@ -3,6 +3,7 @@ package com.lalwaniaditya4.shortner.link;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 public class LinkService {
 
     private final LinkRepository linkRepository;
+    private final StringRedisTemplate stringRedisTemplate;
     
     public CreateLinkResponse createShortLink(String url)
     {
@@ -44,6 +46,8 @@ public class LinkService {
         link.setUrl(uri.toString());
 
         Link saved = linkRepository.save(link);
+
+        stringRedisTemplate.opsForValue().set("url:" + linkCode, uri.toString());
 
         String shortUrl = ServletUriComponentsBuilder
                     .fromCurrentContextPath()
