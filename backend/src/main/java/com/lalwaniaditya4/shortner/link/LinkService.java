@@ -2,6 +2,7 @@ package com.lalwaniaditya4.shortner.link;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Set;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -9,6 +10,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.lalwaniaditya4.shortner.link.dto.CreateLinkResponse;
 import com.lalwaniaditya4.shortner.link.exception.InvalidUrlException;
+import com.lalwaniaditya4.shortner.link.exception.UnavailableShortCodeException;
 import com.lalwaniaditya4.shortner.util.CodeGenerator;
 
 import lombok.RequiredArgsConstructor;
@@ -19,9 +21,11 @@ public class LinkService {
 
     private final LinkRepository linkRepository;
     private final StringRedisTemplate stringRedisTemplate;
+    private final Set<String> RESERVED_CODES = Set.of("admin", "links", "api", "v1", "swagger-ui"); 
     
-    public CreateLinkResponse createShortLink(String url)
+    public CreateLinkResponse createShortLink(String url, String customCode)
     {
+
         URI uri;
 
         try{
@@ -39,13 +43,34 @@ public class LinkService {
             throw new InvalidUrlException("Invalid Url Format", e);
         }
 
-        String linkCode = CodeGenerator.generate(8);
+        String linkCode;
+
+        if(customCode == null)
+        {
+            linkCode = CodeGenerator.generate(8);
+        }
+        else {
+            linkCode = customCode.toLowerCase();
+            if(RESERVED_CODES.contains(linkCode))
+            {
+                throw new UnavailableShortCodeException("This code is already taken.");
+            }
+        }
 
         Link link = new Link();
         link.setShortCode(linkCode);
         link.setUrl(uri.toString());
 
-        Link saved = linkRepository.save(link);
+        Link saved;
+        if(linkRepository.existsById(linkCode))
+        {
+            throw new UnavailableShortCodeException("This code is already taken.");
+        }
+        else
+        {
+            saved = linkRepository.saveAndFlush(link);
+            
+        }
 
         stringRedisTemplate.opsForValue().set("url:" + linkCode, uri.toString());
 

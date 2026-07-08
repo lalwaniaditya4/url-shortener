@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.lalwaniaditya4.shortner.link.dto.CreateLinkRequest;
 import com.lalwaniaditya4.shortner.link.dto.CreateLinkResponse;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
@@ -22,9 +23,9 @@ public class LinkController {
     private final LinkService linkService;
 
     @PostMapping("/")
-    public ResponseEntity<CreateLinkResponse> postLink(@RequestBody CreateLinkRequest request) 
+    public ResponseEntity<CreateLinkResponse> postLink(@Valid @RequestBody CreateLinkRequest request) 
     {
-        CreateLinkResponse response = linkService.createShortLink(request.originalUrl());
+        CreateLinkResponse response = linkService.createShortLink(request.url(), request.customCode());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
     

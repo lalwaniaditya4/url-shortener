@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.lalwaniaditya4.shortner.link.exception.InvalidUrlException;
+import com.lalwaniaditya4.shortner.link.exception.UnavailableShortCodeException;
 import com.lalwaniaditya4.shortner.redirect.exception.InvalidShortCodeException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
             .body(new ErrorResponse("Invalid short code.", e.getMessage()));
+    }
+
+    @ExceptionHandler(UnavailableShortCodeException.class)
+    public ResponseEntity<ErrorResponse> handleUnavailableShortCode(UnavailableShortCodeException e)
+    {
+        log.warn(e.getMessage());
+
+        return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(new ErrorResponse("Short code unavailable.", e.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
